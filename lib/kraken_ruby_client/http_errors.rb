@@ -34,13 +34,4 @@ module KrakenRubyClient
     Net::ProtocolError,
     Timeout::Error
   ].freeze
-
-  class InvalidOrderError < StandardError
-  end
-
-  class InvalidNonceError < StandardError
-  end
-
-  class RateLimitExceeded < StandardError
-  end
 end

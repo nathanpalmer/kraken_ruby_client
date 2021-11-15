@@ -30,6 +30,18 @@ require 'json'
 require 'kraken_ruby_client/http_errors'
 
 module Kraken
+  class InvalidOrderError < StandardError
+  end
+
+  class InsufficientFundsError < StandardError
+  end
+
+  class InvalidNonceError < StandardError
+  end
+
+  class RateLimitExceeded < StandardError
+  end
+
   # irb -I lib (or) rake console
   # require 'kraken_ruby_client'
   # client = Kraken::Client.new(api_key: YOUR_KEY, api_secret: YOUR_SECRET)
@@ -567,24 +579,27 @@ module Kraken
       end
 
       response = parse_response(http)
-      if response.is_a?(Hash) && response.has_key?('error')
-        if response['error'][0] == "EAPI:Rate limit exceeded"
+      if response.is_a?(Hash) && response.has_key?('error') && response['error'].is_a?(Array) && response['error'].size > 0
+        response_error = response['error'].first
+        if response_error == "EAPI:Rate limit exceeded"
           if attempts >= 2
             raise Kraken::RateLimitExceededError, "Rate limit exceeded. Please try again later."
           end
 
           sleep 15
           post_private(method, opts.merge("attempts" => attempts + 1))
-        elsif response['error'][0] == "EAPI:Invalid nonce"
+        elsif response_error == "EAPI:Invalid nonce"
           if attempts >= 2
             raise Kraken::InvalidNonceError, "Invalid nonce. Please try again."
           end
 
           post_private(method, opts.merge("attempts" => attempts + 1))
-        elsif response['error'][0].start_with?("EOrder:Invalid")
-          raise Kraken::InvalidOrderError, response['error'][0]
+        elsif response_error == "EOrder:Insufficient funds"
+          raise Kraken::InsufficientFundsError, response_error
+        elsif response_error.start_with?("EOrder:Invalid")
+          raise Kraken::InvalidOrderError, response_error
         else
-          raise Kraken::Error, response['error'][0]
+          raise Kraken::Error, response_error
         end
       else
         response
