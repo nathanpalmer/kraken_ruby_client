@@ -30,17 +30,11 @@ require 'json'
 require 'kraken_ruby_client/http_errors'
 
 module Kraken
-  class InvalidOrderError < StandardError
-  end
-
-  class InsufficientFundsError < StandardError
-  end
-
-  class InvalidNonceError < StandardError
-  end
-
-  class RateLimitExceeded < StandardError
-  end
+  class Error < StandardError; end
+  class InvalidOrderError < Kraken::Error; end
+  class InsufficientFundsError < Kraken::Error; end
+  class InvalidNonceError < Kraken::Error; end
+  class RateLimitExceeded < Kraken::Error; end
 
   # irb -I lib (or) rake console
   # require 'kraken_ruby_client'
