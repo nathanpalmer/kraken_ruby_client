@@ -567,17 +567,28 @@ module Kraken
       end
 
       response = parse_response(http)
-      if response.is_a?(Hash) && response.has_key?('error') && response['error'][0] == "EAPI:Rate limit exceeded"
-        if attempts > 3
-          raise Kraken::RateLimitExceededError, "Rate limit exceeded. Please try again later."
-        end
+      if response.is_a?(Hash) && response.has_key?('error')
+        if response['error'][0] == "EAPI:Rate limit exceeded"
+          if attempts >= 2
+            raise Kraken::RateLimitExceededError, "Rate limit exceeded. Please try again later."
+          end
 
-        sleep 15
-        post_private(method, opts.merge("attempts" => attempts + 1))
+          sleep 15
+          post_private(method, opts.merge("attempts" => attempts + 1))
+        elsif response['error'][0] == "EAPI:Invalid nonce"
+          if attempts >= 2
+            raise Kraken::InvalidNonceError, "Invalid nonce. Please try again."
+          end
+
+          post_private(method, opts.merge("attempts" => attempts + 1))
+        elsif response['error'][0].start_with?("EOrder:Invalid")
+          raise Kraken::InvalidOrderError, response['error'][0]
+        else
+          raise Kraken::Error, response['error'][0]
+        end
       else
         response
       end
-
     end
 
     def parse_response(http)
