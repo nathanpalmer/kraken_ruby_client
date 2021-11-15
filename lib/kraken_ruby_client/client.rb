@@ -556,6 +556,7 @@ module Kraken
     def post_private(method, opts = {})
       url = "#{@api_private_url}#{method}"
       nonce = opts['nonce'] = generate_nonce
+      attempts = opts.delete('attempts') || 0
       params = opts.map { |param| param.join('=') }.join('&')
 
       http = Curl.post(url, params) do |request|
@@ -565,7 +566,18 @@ module Kraken
         }
       end
 
-      parse_response(http)
+      response = parse_response(http)
+      if response.is_a?(Hash) && response.has_key?('error') && response['error'][0] == "EAPI:Rate limit exceeded"
+        if attempts > 3
+          raise Kraken::RateLimitExceededError, "Rate limit exceeded. Please try again later."
+        end
+
+        sleep 15
+        post_private(method, opts.merge("attempts" => attempts + 1))
+      else
+        response
+      end
+
     end
 
     def parse_response(http)

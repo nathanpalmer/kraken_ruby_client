@@ -34,4 +34,7 @@ module KrakenRubyClient
     Net::ProtocolError,
     Timeout::Error
   ].freeze
+
+  class RateLimitExceeded < StandardError
+  end
 end
