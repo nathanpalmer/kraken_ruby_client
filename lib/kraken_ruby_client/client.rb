@@ -34,7 +34,7 @@ module Kraken
   class InvalidOrderError < Kraken::Error; end
   class InsufficientFundsError < Kraken::Error; end
   class InvalidNonceError < Kraken::Error; end
-  class RateLimitExceeded < Kraken::Error; end
+  class RateLimitExceededError < Kraken::Error; end
 
   # irb -I lib (or) rake console
   # require 'kraken_ruby_client'
